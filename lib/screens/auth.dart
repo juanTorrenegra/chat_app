@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:chat_app/widgets/user_image_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -21,8 +23,7 @@ class _AuthScreenState extends State<AuthScreen> {
   var _enteredEmail = '';
   var _enteredPassword = '';
   File? _selectedImage;
-  //var _isUploading = false; //290
-  //var _isAuthenticating = false;
+  var _isAuthenticating = false; //290
 
   void _submit() async {
     final isValid = _form.currentState!.validate();
@@ -35,6 +36,9 @@ class _AuthScreenState extends State<AuthScreen> {
     _form.currentState!.save(); //save() triggers onSaved:
 
     try {
+      setState(() {
+        _isAuthenticating = true;
+      }); //290
       if (_isLogin) {
         final userCredentials = await _firebase.signInWithEmailAndPassword(
           email: _enteredEmail,
@@ -54,7 +58,16 @@ class _AuthScreenState extends State<AuthScreen> {
 
         await storageRef.putFile(_selectedImage!);
         final imageUrl = await storageRef.getDownloadURL();
-        print(imageUrl);
+        //print((imageUrl, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"));
+
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredentials.user!.uid)
+            .set({
+              'username': "to be done ...",
+              'email': _enteredEmail,
+              'image_url': imageUrl,
+            }); //292
       }
     } on FirebaseAuthException catch (error) {
       if (error.code == 'email-already-in-use') {
@@ -64,6 +77,9 @@ class _AuthScreenState extends State<AuthScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error.message ?? 'Authentication failed.')),
       );
+      setState(() {
+        _isAuthenticating = false;
+      }); //290
     } //279-280
     //print(userCredentials)
     //print(_enteredEmail);
@@ -138,29 +154,33 @@ class _AuthScreenState extends State<AuthScreen> {
                               _enteredPassword = value!;
                             },
                           ),
-                          SizedBox(height: 12),
-                          ElevatedButton(
-                            onPressed: _submit,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.primaryContainer,
+                          const SizedBox(height: 12),
+                          if (_isAuthenticating)
+                            const CircularProgressIndicator(), //290
+                          if (!_isAuthenticating)
+                            ElevatedButton(
+                              onPressed: _submit,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.primaryContainer,
+                              ),
+                              child: Text(_isLogin ? 'Login' : 'Signup'),
                             ),
-                            child: Text(_isLogin ? 'Login' : 'Signup'),
-                          ),
                           SizedBox(height: 12),
-                          TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _isLogin = !_isLogin; //sets as opposite
-                              }); //274
-                            },
-                            child: Text(
-                              _isLogin
-                                  ? 'Create an account'
-                                  : "I already have an account",
+                          if (!_isAuthenticating)
+                            TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  _isLogin = !_isLogin; //sets as opposite
+                                }); //274
+                              },
+                              child: Text(
+                                _isLogin
+                                    ? 'Create an account'
+                                    : "I already have an account",
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ),

@@ -22,6 +22,7 @@ class _AuthScreenState extends State<AuthScreen> {
   var _isLogin = true; //274
   var _enteredEmail = '';
   var _enteredPassword = '';
+  var _enteredUsername = ''; //293
   File? _selectedImage;
   var _isAuthenticating = false; //290
 
@@ -64,7 +65,7 @@ class _AuthScreenState extends State<AuthScreen> {
             .collection('users')
             .doc(userCredentials.user!.uid)
             .set({
-              'username': "to be done ...",
+              'username': _enteredUsername,
               'email': _enteredEmail,
               'image_url': imageUrl,
             }); //292
@@ -134,12 +135,31 @@ class _AuthScreenState extends State<AuthScreen> {
                                   !value.contains("@")) {
                                 return "Please enter a valid email address.";
                               }
+
                               return null;
                             }, //275 validation email
                             onSaved: (value) {
                               _enteredEmail = value!;
                             },
                           ),
+                          if (!_isLogin)
+                            TextFormField(
+                              decoration: InputDecoration(
+                                labelText: 'Username',
+                              ),
+                              enableSuggestions: false,
+                              validator: (value) {
+                                if (value == null ||
+                                    value.trim().isEmpty ||
+                                    value.trim().length < 4) {
+                                  return "Please enter at least 4 characters.";
+                                }
+                                return null;
+                              },
+                              onSaved: (value) {
+                                _enteredUsername = value!;
+                              }, //293
+                            ),
                           SizedBox(height: 10),
                           TextFormField(
                             decoration: InputDecoration(labelText: 'Password'),

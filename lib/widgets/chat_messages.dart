@@ -36,9 +36,9 @@ class ChatMessages extends StatelessWidget {
             final chatMessage = loadedMessages[index].data();
             final nextChatMessage = index + 1 < loadedMessages.length
                 ? loadedMessages[index + 1].data()
-                : null;
+                : null; //298
 
-            final currentMessageUserId = chatMessage['userId'];
+            final currentMessageUserId = chatMessage['userId']; //298
             final nextMessageUserId = nextChatMessage != null
                 ? nextChatMessage['userId']
                 : null;
@@ -57,7 +57,7 @@ class ChatMessages extends StatelessWidget {
                 isMe: authenticatedUser.uid == currentMessageUserId,
               );
             }
-          },
+          }, //298
         );
       },
     ); //297
